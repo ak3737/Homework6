@@ -5,6 +5,7 @@ library(dplyr)
 library(knitr)
 library(kableExtra)
 library(forcats)
+library(pandas)
 library(Envstats)
 library(mice)
 library(naniar)
@@ -56,13 +57,15 @@ anyNA(predict)
 
 plot(predict)
 
-averagedPredict <- aggregate(predict, by= list(test$custId), mean)
+#Aggregate by taking the sum per cust ID
+averagedPredict <- aggregate(predict, by= list(test$custId), sum)
 
-anyNA(averagedPredict$x)
-hist(averagedPredict$x)
+#Convert Negative Revenue to 0
+averagedPredict[averagedPredict < 0] <- 0
 
+#Transform data to be ln(predictedValue + 1)
+averagedPredict[, 2] <- log(averagedPredict[, 2] + 1) 
 
-min(averagedPredict$x)
-max(averagedPredict$x)
+#Write to csv for submission
+write.csv(transformedPredicted, "submission.csv", row.names = TRUE)
 
-head(averagedPredict)
