@@ -7,6 +7,7 @@ library(kableExtra)
 library(forcats)
 library(pandas)
 library(Envstats)
+library(outliers)
 library(mice)
 library(naniar)
 
@@ -43,19 +44,22 @@ ggplot(train,
 
 #We should perform a test for outliers. There is almost certainly 
 #one outlier (the largest transaction)
+outlierTest <- grubbs.test(train$revenue)
+trainNoOutlier <- train[train$revenue != 15980.79,]
 
+outlierTest2 <- grubbs.test(trainNoOutlier$revenue)
 
 
 #The below code is just me playing around with the data
 train2 <- train[,!colnames(train) %in% c("browser", "country")]
 
+#Model 1 Score was 2.17158
 model1 <- lm(data = train2, formula = revenue ~ operatingSystem + deviceCategory + visitNumber)
-
 predict <- predict.lm(model1, test)
 
-anyNA(predict)
-
-plot(predict)
+#Model 2 Score was 2.11272
+model2 <- lm(data = trainNoOutlier, formula = revenue ~ operatingSystem + deviceCategory + visitNumber)
+predict <- predict.lm(model2, test)
 
 #Aggregate by taking the sum per cust ID
 averagedPredict <- aggregate(predict, by= list(test$custId), sum)
@@ -66,6 +70,9 @@ averagedPredict[averagedPredict < 0] <- 0
 #Transform data to be ln(predictedValue + 1)
 averagedPredict[, 2] <- log(averagedPredict[, 2] + 1) 
 
+#Change headers to the expected names
+colnames(averagedPredict) <- c("custID", "predRevenue")
+
 #Write to csv for submission
-write.csv(transformedPredicted, "submission.csv", row.names = TRUE)
+write.csv(averagedPredict, "submission.csv", row.names=FALSE)
 
