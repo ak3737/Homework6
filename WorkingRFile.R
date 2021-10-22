@@ -11,11 +11,17 @@ library(outliers)
 library(mice)
 library(naniar)
 
+
+
+library(pls)
+library(lars)
+
+
 test <- read.csv("Test.csv")
 train <- read.csv("Train.csv")
 
 attach(train)
-
+View(train)
 ##Data Understanding
 
 #There appears to be an outlier 
@@ -40,6 +46,16 @@ ggplot(train,
            y = operatingSystem)) +
   geom_miss_point()
 
+train %>% select_if(is.numeric) %>% names()
+train %>% select_if(is.factor) %>% names()
+train %>% select_if(is.character) %>% names()
+
+train <- train %>% mutate_if(is.character, as.factor)
+
+train %>% select_if(is.factor) %>% sapply(levels)
+train %>% select_if(is.factor) %>% sapply(levels) %>% sapply(length)
+
+anyNA(trainNoOutlier$isMobile)
 #Notes:
 
 #We should perform a test for outliers. There is almost certainly 
@@ -47,19 +63,30 @@ ggplot(train,
 outlierTest <- grubbs.test(train$revenue)
 trainNoOutlier <- train[train$revenue != 15980.79,]
 
-outlierTest2 <- grubbs.test(trainNoOutlier$revenue)
 
-
-#The below code is just me playing around with the data
-train2 <- train[,!colnames(train) %in% c("browser", "country")]
+##Models
 
 #Model 1 Score was 2.17158
-model1 <- lm(data = train2, formula = revenue ~ operatingSystem + deviceCategory + visitNumber)
+model1 <- lm(data = train, formula = revenue ~ operatingSystem + deviceCategory + visitNumber)
 predict <- predict.lm(model1, test)
 
 #Model 2 Score was 2.11272
 model2 <- lm(data = trainNoOutlier, formula = revenue ~ operatingSystem + deviceCategory + visitNumber)
-predict <- predict.lm(model2, test)
+
+#Model 3 Score was 1.98235
+model3 <- lm(data = trainNoOutlier, formula = revenue ~ 
+               operatingSystem + deviceCategory + visitNumber + isTrueDirect)
+
+#Model 4 Score was 1.97586
+model4 <- lm(data = trainNoOutlier, formula = revenue ~ 
+               operatingSystem + deviceCategory + visitNumber + isTrueDirect +
+               timeSinceLastVisit + visitStartTime)
+
+
+summary(model4)
+##Output
+
+predict <- predict.lm(model4, test)
 
 #Aggregate by taking the sum per cust ID
 averagedPredict <- aggregate(predict, by= list(test$custId), sum)
