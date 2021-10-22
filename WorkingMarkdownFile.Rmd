@@ -1,0 +1,73 @@
+---
+title: "Ajoku-Asghar-Burton HW6"
+author: "Oiza Ajoku, Anuba Asghar and Zachary Burton"
+date: "10/21/2021"
+output:
+  word_document: default
+---
+---
+title: "DSA-5103 Homework 6"
+author:
+  - Oiza Ajoku
+  - Anuba Asghar
+  - Zachary Burton
+date: "10/21/2021"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(forcats)
+library(pandas)
+library(Envstats)
+library(outliers)
+library(mice)
+library(naniar)
+library(pls)
+library(lars)
+
+test <- read.csv("Test.csv")
+train <- read.csv("Train.csv")
+
+attach(train)
+```
+
+## Question 1 (a) i. Data Understanding
+
+#Our intial analysis began with a histogram of the revenue in the training dataset.
+#   on intital oversvation there appears to be an outlier. We performed a grubs test
+#   to verify. 
+
+
+```{r echo = T, results = 'hide'}
+
+hist(train$revenue)
+
+outlierTest <- grubbs.test(train$revenue)
+trainNoOutlier <- train[train$revenue != 15980.79,]
+
+```
+
+#From the results of the outlier, the p-value is < 0.05 and thus we can reject the
+#   null hypothesis and verfiy that the record with the highest revenue (the revenue 
+#   being 15980.79 in this case) is indeed an outlier and should be removed. 
+
+
+
+
+
+
+
+
+
+
+
+
+
