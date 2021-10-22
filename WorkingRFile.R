@@ -79,11 +79,35 @@ model4 <- lm(data = trainNoOutlier, formula = revenue ~
                operatingSystem + deviceCategory + visitNumber + isTrueDirect +
                timeSinceLastVisit + visitStartTime)
 
+#Aggregate Training and Test Data
+mdldata <- train %>% 
+  group_by(custId) %>% 
+  mutate(revenue = sum(revenue)) %>%
+  mutate(operatingSystem  = first(operatingSystem)) %>%
+  mutate(deviceCategory = first(deviceCategory)) %>%
+  mutate(visits = sum(visitNumber)) %>%
+  select(custId, revenue, deviceCategory,operatingSystem, visits)
 
-summary(model4)
+mdldatatest <- test %>% 
+  group_by(custId) %>% 
+  mutate(operatingSystem  = first(operatingSystem)) %>%
+  mutate(deviceCategory = first(deviceCategory)) %>%
+  mutate(visits = sum(visitNumber)) %>%
+  select(custId, deviceCategory,operatingSystem, visits)
+
+#Model 5 Score: 1.41180
+model5<- lm(data=mdldata, log(revenue + 1) ~ deviceCategory + operatingSystem + visits)
+
 ##Output
 
-predict <- predict.lm(model4, test)
+#Logic for outputting results for aggregated models
+predict <- predict.lm(model5, mdldatatest)
+predictDataFrame <- data.frame(predict)
+predictDataFrame$custID <- mdldatatest$custId
+predictDataFrame <- predictDataFrame[, c("custID", "predict")]
+colnames(predictDataFrame) <- c("custID", "predRevenue")
+noduplicates <- predictDataFrame[!duplicated(predictDataFrame$custID),]
+write.csv(noduplicates, "submission.csv", row.names=FALSE)
 
 #Aggregate by taking the sum per cust ID
 averagedPredict <- aggregate(predict, by= list(test$custId), sum)
@@ -95,7 +119,7 @@ averagedPredict[averagedPredict < 0] <- 0
 averagedPredict[, 2] <- log(averagedPredict[, 2] + 1) 
 
 #Change headers to the expected names
-colnames(averagedPredict) <- c("custID", "predRevenue")
+colnames(predict) <- c("custID", "predRevenue")
 
 #Write to csv for submission
 write.csv(averagedPredict, "submission.csv", row.names=FALSE)
