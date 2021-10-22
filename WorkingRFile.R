@@ -109,6 +109,29 @@ colnames(predictDataFrame) <- c("custID", "predRevenue")
 noduplicates <- predictDataFrame[!duplicated(predictDataFrame$custID),]
 write.csv(noduplicates, "submission.csv", row.names=FALSE)
 
+
+#Aggregate Training and Test Data
+mdldata <- train %>% 
+  group_by(custId) %>% 
+  mutate(revenue = sum(revenue)) %>%
+  mutate(operatingSystem  = first(operatingSystem)) %>%
+  mutate(deviceCategory = first(deviceCategory)) %>%
+  mutate(visits = sum(visitNumber)) %>%
+  mutate(continent = first(continent)) %>%
+  mutate(source = first(source)) %>%
+  select(custId, revenue, deviceCategory,operatingSystem, visits, continent, source)
+
+mdldatatest <- test %>% 
+  group_by(custId) %>% 
+  mutate(operatingSystem  = first(operatingSystem)) %>%
+  mutate(deviceCategory = first(deviceCategory)) %>%
+  mutate(visits = sum(visitNumber)) %>%
+  mutate(continent = first(continent)) %>%
+  mutate(source = first(source)) %>%
+  select(custId, deviceCategory,operatingSystem, visits, continent, source)
+
+#Model 6 Score
+model6<- lm(data=mdldata, log(revenue + 1) ~ deviceCategory + ope
 #Aggregate by taking the sum per cust ID
 averagedPredict <- aggregate(predict, by= list(test$custId), sum)
 
